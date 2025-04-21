@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon server.ts --ignore client",
     "client": "npm start --prefix ../frontend",
+      "seed:admin": "ts-node scripts/seedAdmin.ts",
     "ems": "concurrently \"npm run start\" \"npm run client\""
   },
   "author": "",

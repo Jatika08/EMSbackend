@@ -4,13 +4,19 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { hashPassword, verifyPassword } from "./hashingController";
 
-export async function newUser(req: Request, res: Response, next: NextFunction) {
+
+export async function newUser(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
   try {
     const { email, password, ...rest } = req.body;
 
     const existingUser = await userModel.getUserByEmail(email);
     if (existingUser) {
-      return res.status(409).json({ message: "User already exists" });
+      res.status(409).json({ message: "User already exists" });
+      return;
     }
 
     const hashedPassword = await hashPassword(password);
@@ -26,6 +32,7 @@ export async function newUser(req: Request, res: Response, next: NextFunction) {
     next(err);
   }
 }
+
 export async function loginUser(
   req: Request,
   res: Response,

@@ -81,7 +81,7 @@ async function createUser(user: User) {
 async function initDatabase() {
   await pool.query(`
     CREATE TABLE if not exists users (
-      id SERIAL PRIMARY KEY,
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
       joining_date DATE,
@@ -124,7 +124,7 @@ async function initDatabase() {
 
   await pool.query(`
     CREATE TABLE if not exists user_tokens (
-      id SERIAL PRIMARY KEY,
+      tokens_id SERIAL PRIMARY KEY,
       user_id UUID REFERENCES users(id) ON DELETE CASCADE,
       token TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT NOW()
@@ -133,17 +133,12 @@ async function initDatabase() {
 }
 
 async function getUserByEmail(email: string) {
-  const res = await pool.query(
-    "SELECT * FROM users WHERE email = $1",
-    [email]
-  );
+  const res = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
   return res.rows[0];
 }
 
 async function getMe(email: string) {
-  const res = await pool.query("SELECT * FROM users WHERE email = $1", [
-    email,
-  ]);
+  const res = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
   return res.rows[0];
 }
 
@@ -187,7 +182,8 @@ async function deleteUser(id: number) {
 }
 
 async function applyLeave(values: [string, string, string]) {
-  const q = "INSERT INTO leaves (email, start_date, end_date) VALUES ($1, $2, $3) RETURNING *";
+  const q =
+    "INSERT INTO leaves (email, start_date, end_date) VALUES ($1, $2, $3) RETURNING *";
   const res = await pool.query(q, values);
   return res.rows[0];
 }
@@ -197,12 +193,19 @@ async function applyHalfDay(values: [string, string, string]) {
 }
 
 async function applyWfh(values: [string, string, string]) {
-  const q = "INSERT INTO wfh (email, start_date, end_date) VALUES ($1, $2, $3) RETURNING *";
+  const q =
+    "INSERT INTO wfh (email, start_date, end_date) VALUES ($1, $2, $3) RETURNING *";
   const res = await pool.query(q, values);
   return res.rows[0];
 }
 
-async function approveLeave(values: [string, string]) {
+async function approveLeave({
+  email,
+  leaveId,
+}: {
+  email: string;
+  leaveId: string;
+}) {
   const q = `
     UPDATE users
     SET is_approved = true
@@ -210,7 +213,7 @@ async function approveLeave(values: [string, string]) {
     AND leaveId = $2
     RETURNING *;
   `;
-  const res = await pool.query(q, values);
+  const res = await pool.query(q, [email, leaveId]);
   return res.rows[0];
 }
 
@@ -229,7 +232,10 @@ async function getRecentlyPostedLeaves(limit: number, offset: number) {
   return res.rows;
 }
 
-async function getApprovedLeavesWfh({ startDate, endDate }: ApprovedLeaveParams) {
+async function getApprovedLeavesWfh({
+  startDate,
+  endDate,
+}: ApprovedLeaveParams) {
   const q = `
     SELECT * FROM (
       SELECT * FROM leaves

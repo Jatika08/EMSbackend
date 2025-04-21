@@ -1,6 +1,8 @@
-import express from "express";
+import express, { NextFunction } from "express";
 import { check } from "express-validator";
 import checkAuth from "../middleware/check-auth";
+import { Request, Response } from "express";
+
 
 import {
   loginUser,
@@ -9,6 +11,11 @@ import {
   getAllUsers,
 } from "../controllers/userController";
 import { createUserByAdmin } from "../controllers/adminController";
+import { AuthenticatedRequest } from "../types/types";
+
+interface CustomUser {
+  isSuperUser: boolean;
+}
 
 const userRoutes = express.Router();
 
@@ -34,9 +41,14 @@ userRoutes.post(
   newUser
 );
 
-const checkAdmin = (req, res, next) => {
+const checkAdmin = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void => {
   if (!req.user?.isSuperUser) {
-    return res.status(403).json({ message: "Admins only." });
+    res.status(403).json({ message: "Admins only." });
+    return;
   }
   next();
 };
