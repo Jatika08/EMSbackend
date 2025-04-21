@@ -1,4 +1,4 @@
-const userModel = require("../models/user");
+const userModel = require("../../models/user");
 
 const applyForLeave = async (req, res, next) => {
   const { leaveDays, leaveStartDate, leaveEndDate } = req.body.leaveDate;

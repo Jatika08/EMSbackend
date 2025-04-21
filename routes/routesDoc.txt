@@ -1,0 +1,41 @@
+/login
+/register: users can 
+/me: this is accessibble by the current user only, will give all the current user data
+    the user can edit their own details as well
+
+
+accessible to anyone
+/leaves: get all the leaves
+    leaves:[
+            {leaveid, applydate, userId,userName, userEmail, startdate, endDate,reason, isApproved},
+            {},
+        ]
+/wfh
+/leaves: put
+/leaves: patch
+
+
+
+accessible to all the employees who are one level above
+/profile: get all the profile data
+    ie: {user id, username, user department}
+/profile/:id
+    this gets all the selected profile data
+    format is as follows
+    {
+        username,
+        email,
+        ...
+        leaveData:[
+            {leaveid, applydate, startdate, endDate, isApproved},
+            {},
+        ]
+    }
+
+these are the super user routes
+/action 
+put: creates the user
+
+/action/:id
+delete:
+patch: edit the user details

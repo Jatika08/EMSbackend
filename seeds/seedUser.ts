@@ -19,10 +19,8 @@ require('dotenv').config();
       isSuperUser: false,
       address: "456 Test Street",
       dateOfBirth: new Date("1995-05-05"),
-      githubId: "testGit",
-      linkedInId: "testLinkedIn",
       phone: "1234567890",
-      leaveDate: [], // empty leave object array
+      leaveDate: [],
     });
 
     console.log("Test user added!", testUser.toJSON());
