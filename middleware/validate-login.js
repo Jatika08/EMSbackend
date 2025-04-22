@@ -33,7 +33,8 @@ export async function authenticateToken(req, res, next) {
 
 export const checkAdmin = async (req, res, next) => {
   try {
-    const { email } = req.body;
+    // const { email } = req.body;
+    const email = req.user?.email;
 
     if (!email) {
       return res.status(400).json({ message: "Email is required." });

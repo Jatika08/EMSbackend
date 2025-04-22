@@ -1,4 +1,5 @@
 import { userModel } from "../models/user.js";
+import { hashPassword } from "./hashingController.js";
 
 export async function createUserByAdmin(req, res) {
   try {
@@ -23,10 +24,12 @@ export async function createUserByAdmin(req, res) {
     if (!email || !password || !name || !position) {
       return res.status(400).json({ message: "Missing required fields" });
     }
+    const hashedPassword = await hashPassword(password);
+    console.log("hashedPassword", hashedPassword);
 
     const user = await userModel.createUser({
       email,
-      password,
+      password:hashedPassword,
       joiningDate,
       position,
       name,
