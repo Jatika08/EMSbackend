@@ -1,31 +1,31 @@
-import pool from "../database/db";
+import pool from "../database/db.js";
 
 // Type definitions
-interface User {
-  id?: number;
-  email: string;
-  password: string;
-  joiningDate?: string;
-  position?: string;
-  name?: string;
-  aadhar?: string;
-  panNo?: string;
-  isSuperUser?: boolean;
-  image?: string;
-  address?: string;
-  linkedInId?: string;
-  phone?: string;
-  githubId?: string;
-  dateOfBirth?: string;
-  leaveDate?: string[];
-}
+// interface User {
+//   id?: number;
+//   email: string;
+//   password: string;
+//   joiningDate?: string;
+//   position?: string;
+//   name?: string;
+//   aadhar?: string;
+//   panNo?: string;
+//   isSuperUser?: boolean;
+//   image?: string;
+//   address?: string;
+//   linkedInId?: string;
+//   phone?: string;
+//   githubId?: string;
+//   dateOfBirth?: string;
+//   leaveDate?: string[];
+// }
 
-interface ApprovedLeaveParams {
-  startDate: string;
-  endDate: string;
-}
+// interface ApprovedLeaveParams {
+//   startDate: string;
+//   endDate: string;
+// }
 
-async function createUser(user: User) {
+async function createUser(user) {
   const {
     email,
     password,
@@ -132,19 +132,19 @@ async function initDatabase() {
   `);
 }
 
-async function getUserByEmail(email: string) {
+async function getUserByEmail(email) {
   const res = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
   return res.rows[0];
 }
 
-async function getMe(email: string) {
+async function getMe(email) {
   const res = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
   return res.rows[0];
 }
 
-async function getAllUsers(departmentIds: number[] = []) {
+async function getAllUsers(departmentIds=[]) {
   let query = "SELECT * FROM users";
-  let values: number[] = [];
+  let values= [];
 
   if (departmentIds.length > 0) {
     const placeholders = departmentIds.map((_, i) => `$${i + 1}`).join(", ");
@@ -156,7 +156,7 @@ async function getAllUsers(departmentIds: number[] = []) {
   return res.rows;
 }
 
-async function updateUser(id: number, updates: Partial<User>) {
+async function updateUser(id, updates) {
   const fields = Object.keys(updates);
   const values = Object.values(updates);
 
@@ -174,25 +174,25 @@ async function updateUser(id: number, updates: Partial<User>) {
   return res.rows[0];
 }
 
-async function deleteUser(id: number) {
+async function deleteUser(id) {
   const res = await pool.query("DELETE FROM users WHERE id = $1 RETURNING *", [
     id,
   ]);
   return res.rows[0];
 }
 
-async function applyLeave(values: [string, string, string]) {
+async function applyLeave(values) {
   const q =
     "INSERT INTO leaves (email, start_date, end_date) VALUES ($1, $2, $3) RETURNING *";
   const res = await pool.query(q, values);
   return res.rows[0];
 }
 
-async function applyHalfDay(values: [string, string, string]) {
+async function applyHalfDay(values) {
   return applyLeave(values); // same as applyLeave
 }
 
-async function applyWfh(values: [string, string, string]) {
+async function applyWfh(values) {
   const q =
     "INSERT INTO wfh (email, start_date, end_date) VALUES ($1, $2, $3) RETURNING *";
   const res = await pool.query(q, values);
@@ -202,9 +202,6 @@ async function applyWfh(values: [string, string, string]) {
 async function approveLeave({
   email,
   leaveId,
-}: {
-  email: string;
-  leaveId: string;
 }) {
   const q = `
     UPDATE users
@@ -217,7 +214,7 @@ async function approveLeave({
   return res.rows[0];
 }
 
-async function getRecentlyPostedLeaves(limit: number, offset: number) {
+async function getRecentlyPostedLeaves(limit, offset) {
   const q = `
     SELECT * FROM (
       SELECT * FROM leaves
@@ -235,7 +232,7 @@ async function getRecentlyPostedLeaves(limit: number, offset: number) {
 async function getApprovedLeavesWfh({
   startDate,
   endDate,
-}: ApprovedLeaveParams) {
+}) {
   const q = `
     SELECT * FROM (
       SELECT * FROM leaves
@@ -251,7 +248,7 @@ async function getApprovedLeavesWfh({
   return res.rows;
 }
 
-async function getLeavesByEmail(email: string) {
+async function getLeavesByEmail(email) {
   const q = `
     SELECT * FROM (
       SELECT * FROM leaves

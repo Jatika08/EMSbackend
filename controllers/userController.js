@@ -1,15 +1,9 @@
-import { Request, Response, NextFunction } from "express";
-import { userModel } from "../models/user";
+import { userModel } from "../models/user.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { hashPassword, verifyPassword } from "./hashingController";
+import { hashPassword, verifyPassword } from "./hashingController.js";
 
-
-export async function newUser(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function newUser(req, res, next) {
   try {
     const { email, password, ...rest } = req.body;
 
@@ -33,11 +27,7 @@ export async function newUser(
   }
 }
 
-export async function loginUser(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export async function loginUser(req, res, next) {
   try {
     const { email, password } = req.body;
 
@@ -65,21 +55,17 @@ export async function loginUser(
   }
 }
 
-export async function getUserProfile(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export async function getUserProfile(req, res, next) {
   try {
-    const userIdParam = req.query.email;
-    const currentUserId = req.query.email;
+    const userIdParam = req.body.email;
+    const currentUserId = req.body.email;
 
     const targetUser = userIdParam
-      ? await userModel.getMe(userIdParam as string)
-      : await userModel.getUserByEmail(currentUserId as string);
+      ? await userModel.getMe(userIdParam)
+      : await userModel.getUserByEmail(currentUserId);
 
     if (!targetUser) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: currentUserId+" user not found" });
     }
 
     const isSelf = String(currentUserId) === String(targetUser.id);
@@ -88,23 +74,21 @@ export async function getUserProfile(
       ? targetUser
       : {
           id: targetUser.id,
+          email: targetUser.email,
+          joining_date: targetUser.joining_date,
+          date_of_birth: targetUser.date_of_birth,
+          phone: targetUser.phone,
           name: targetUser.name,
           position: targetUser.position,
-          image: targetUser.image,
           linkedInId: targetUser.linked_in_id,
         };
-
-    res.status(200).json(userProfile);
+    return res.status(200).json(userProfile);
   } catch (err) {
     next(err);
   }
 }
 
-export async function getAllUsers(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export async function getAllUsers(req, res, next) {
   try {
     const departmentIds = req.query.departmentIds
       ? String(req.query.departmentIds)

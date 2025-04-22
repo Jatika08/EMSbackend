@@ -1,21 +1,14 @@
-import express, { NextFunction } from "express";
+import express from "express";
 import { check } from "express-validator";
-import checkAuth from "../middleware/check-auth";
-import { Request, Response } from "express";
-
+import checkAuth from "../middleware/check-auth.js";
 
 import {
   loginUser,
   newUser,
   getUserProfile,
   getAllUsers,
-} from "../controllers/userController";
-import { createUserByAdmin } from "../controllers/adminController";
-import { AuthenticatedRequest } from "../types/types";
-
-interface CustomUser {
-  isSuperUser: boolean;
-}
+} from "../controllers/userController.js";
+import { createUserByAdmin } from "../controllers/adminController.js";
 
 const userRoutes = express.Router();
 
@@ -41,11 +34,7 @@ userRoutes.post(
   newUser
 );
 
-const checkAdmin = (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-): void => {
+const checkAdmin = (req, res, next) => {
   if (!req.user?.isSuperUser) {
     res.status(403).json({ message: "Admins only." });
     return;
@@ -54,9 +43,12 @@ const checkAdmin = (
 };
 
 // userRoutes.use(checkAuth);
-// userRoutes.get("/me", getUserProfile);
-// userRoutes.get("/profile/:id", getUserProfile);
-// userRoutes.get("/users", getAllUsers);
+userRoutes.get("/me", async (req, res, next) => {
+  await getUserProfile(req, res, next);
+});
+
+userRoutes.get("/profile/:id", getUserProfile);
+userRoutes.get("/users", getAllUsers);
 
 // userRoutes.post("/action", checkAdmin, createUserByAdmin);
 // userRoutes.get("/action/:id", checkAdmin, getUserByIdForAdmin);

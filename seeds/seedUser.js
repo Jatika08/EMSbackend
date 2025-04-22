@@ -1,11 +1,13 @@
 import dotenv from "dotenv";
-import pool from "../database/db";
-import { hashPassword } from "../controllers/hashingController";
+import pool from "../database/db.js";
+import { hashPassword } from "../controllers/hashingController.js";
 
 dotenv.config();
 
-(async () => {
+const seedAdminUser = async () => {
   try {
+    await pool.query("SELECT 1");
+
     const hashedPassword = await hashPassword("test123");
 
     const result = await pool.query(
@@ -35,13 +37,17 @@ dotenv.config();
     );
 
     if (result.rows.length > 0) {
-      console.log("✅ Admin user seeded:", result.rows[0]);
+      console.log("Admin user seeded:", result.rows[0]);
     } else {
-      console.log("ℹ️ Admin user already exists.");
+      console.log("Admin user already exists.");
     }
   } catch (err) {
-    console.error("❌ Failed to seed admin user:", err);
-  } finally {
-    await pool.end();
+    console.error("Failed to seed admin user:", err);
   }
-})();
+};
+
+if (process.argv[1] === new URL(import.meta.url).pathname) {
+  seedAdminUser();
+}
+
+export default seedAdminUser;

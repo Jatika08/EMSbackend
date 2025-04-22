@@ -1,8 +1,7 @@
-import { RequestHandler } from "express";
-import { verify } from "jsonwebtoken";
-import { AuthenticatedRequest } from "../types/types";
+import jwt from "jsonwebtoken";
+const { verify } = jwt;
 
-const checkAuth: RequestHandler = (req, res, next) => {
+const checkAuth = (req, res, next) => {
   if (req.method === "OPTIONS") {
     return next();
   }
@@ -20,18 +19,15 @@ const checkAuth: RequestHandler = (req, res, next) => {
     }
 
     const token = authHeader.split(" ")[1];
-    const decodedToken = verify(token, process.env.JWT_SECRET || "hello") as {
-      userId: string;
-      email: string;
-    };
+    const decodedToken = verify(token, process.env.JWT_SECRET || "hello");
 
-    (req as AuthenticatedRequest).user = {
+    req.user = {
       userId: decodedToken.userId,
       email: decodedToken.email,
     };
 
     next();
-  } catch (err: any) {
+  } catch (err) {
     res.status(401).json({
       message: "Authentication failed: Invalid token",
       error: {
@@ -44,6 +40,5 @@ const checkAuth: RequestHandler = (req, res, next) => {
     return;
   }
 };
-
 
 export default checkAuth;

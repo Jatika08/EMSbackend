@@ -1,8 +1,8 @@
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
 import { check } from "express-validator";
 
-import { newUser, loginUser } from "../controllers/userController";
-import checkAuth from "../middleware/check-auth";
+import { newUser, loginUser } from "../controllers/userController.js";
+import checkAuth from "../middleware/check-auth.js";
 
 const superUserRoutes = express.Router();
 
@@ -13,7 +13,7 @@ superUserRoutes.post(
     check("email").normalizeEmail().isEmail().withMessage("Valid email is required"),
     check("password").isLength({ min: 6 }).withMessage("Password must be at least 6 characters"),
   ],
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req, res, next) => {
     try {
       if (typeof loginUser !== "function") {
         res.status(500).json({ message: "loginUser function is missing!" });
@@ -39,7 +39,7 @@ superUserRoutes.post(
     check("aadhar").notEmpty().withMessage("Aadhar is required"),
     check("panNo").notEmpty().withMessage("PAN number is required"),
   ],
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req, res, next) => {
     try {
       if (typeof newUser !== "function") {
         res.status(500).json({ message: "newUser function is missing!" });

@@ -1,11 +1,6 @@
-import { Request, Response, NextFunction } from "express";
-import { userModel } from "../models/user";
+import { userModel } from "../models/user.js";
 
-export const getLeaveData = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const getLeaveData = async (req, res, next) => {
   try {
     const { email } = req.body;
     const leaveData = await userModel.getLeavesByEmail(email);
@@ -15,11 +10,7 @@ export const getLeaveData = async (
   }
 };
 
-export const approveLeave = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const approveLeave = async (req, res, next) => {
   try {
     const { email, leaveId } = req.body;
     const leaveData = await userModel.approveLeave({ email, leaveId });
@@ -29,11 +20,7 @@ export const approveLeave = async (
   }
 };
 
-export const applyLeaves = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const applyLeaves = async (req, res, next) => {
   try {
     const { email, startDate, endDate } = req.body;
 

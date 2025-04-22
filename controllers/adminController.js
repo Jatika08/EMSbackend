@@ -1,7 +1,6 @@
-import { Request, Response } from "express";
-import { userModel } from "../models/user";
+import { userModel } from "../models/user.js";
 
-export async function createUserByAdmin(req: Request, res: Response) {
+export async function createUserByAdmin(req, res) {
   try {
     const {
       email,
@@ -20,7 +19,6 @@ export async function createUserByAdmin(req: Request, res: Response) {
       dateOfBirth,
       leaveDate = [],
     } = req.body;
-
 
     if (!email || !password || !name || !position) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -53,17 +51,17 @@ export async function createUserByAdmin(req: Request, res: Response) {
   }
 }
 
-export async function updateUserByAdmin(req: Request, res: Response) {
+export async function updateUserByAdmin(req, res) {
   const updated = await userModel.updateUser(req.params.id, req.body);
   res.status(200).json(updated);
 }
 
-export async function patchUserByAdmin(req: Request, res: Response) {
+export async function patchUserByAdmin(req, res) {
   const patched = await userModel.updateUser(req.params.id, req.body);
   res.status(200).json(patched);
 }
 
-export async function deleteUserByAdmin(req: Request, res: Response) {
+export async function deleteUserByAdmin(req, res) {
   const deleted = await userModel.deleteUser(req.params.id);
   res.status(200).json(deleted);
 }
