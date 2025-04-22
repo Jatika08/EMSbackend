@@ -7,6 +7,7 @@ import {
   newUser,
   getUserProfile,
   getAllUsers,
+  isSuperUser
 } from "../controllers/userController.js";
 import { createUserByAdmin } from "../controllers/adminController.js";
 
@@ -34,12 +35,25 @@ userRoutes.post(
   newUser
 );
 
-const checkAdmin = (req, res, next) => {
-  if (!req.user?.isSuperUser) {
-    res.status(403).json({ message: "Admins only." });
-    return;
+const checkAdmin = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required.' });
+    }
+
+    const superUser = await isSuperUser(email);
+
+    if (!superUser) {
+      return res.status(403).json({ message: 'Admins only.' });
+    }
+
+    next();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
-  next();
 };
 
 // userRoutes.use(checkAuth);
@@ -50,7 +64,7 @@ userRoutes.get("/me", async (req, res, next) => {
 userRoutes.get("/profile/:id", getUserProfile);
 userRoutes.get("/users", getAllUsers);
 
-// userRoutes.post("/action", checkAdmin, createUserByAdmin);
+userRoutes.post("/action", checkAdmin, createUserByAdmin);
 // userRoutes.get("/action/:id", checkAdmin, getUserByIdForAdmin);
 // userRoutes.put("/action/:id", checkAdmin, updateUserByAdmin);
 // userRoutes.patch("/action/:id", checkAdmin, patchUserByAdmin);

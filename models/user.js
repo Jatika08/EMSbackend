@@ -142,9 +142,9 @@ async function getMe(email) {
   return res.rows[0];
 }
 
-async function getAllUsers(departmentIds=[]) {
+async function getAllUsers(departmentIds = []) {
   let query = "SELECT * FROM users";
-  let values= [];
+  let values = [];
 
   if (departmentIds.length > 0) {
     const placeholders = departmentIds.map((_, i) => `$${i + 1}`).join(", ");
@@ -199,10 +199,7 @@ async function applyWfh(values) {
   return res.rows[0];
 }
 
-async function approveLeave({
-  email,
-  leaveId,
-}) {
+async function approveLeave({ email, leaveId }) {
   const q = `
     UPDATE users
     SET is_approved = true
@@ -229,10 +226,7 @@ async function getRecentlyPostedLeaves(limit, offset) {
   return res.rows;
 }
 
-async function getApprovedLeavesWfh({
-  startDate,
-  endDate,
-}) {
+async function getApprovedLeavesWfh({ startDate, endDate }) {
   const q = `
     SELECT * FROM (
       SELECT * FROM leaves
@@ -262,7 +256,25 @@ async function getLeavesByEmail(email) {
   return res.rows;
 }
 
+const isSuperUser = async (email) => {
+  try {
+    const result = await pool.query(
+      "SELECT is_super_user FROM users WHERE email = $1",
+      [email]
+    );
+    if (result.rows.length === 0) {
+      return false;
+    }
+
+    return result.rows[0].is_super_user === true;
+  } catch (error) {
+    console.error("Error checking super user status:", error);
+    throw new Error("Database error");
+  }
+};
+
 export const userModel = {
+  isSuperUser,
   createUser,
   initDatabase,
   getUserByEmail,
