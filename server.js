@@ -21,9 +21,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-app.use("/api/superuser", superUserRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/leaves", leaveRoutes);
+app.use("/superuser", superUserRoutes);
+app.use("/users", userRoutes);
+app.use("/leaves", leaveRoutes);
 
 // 404 handler
 app.use((req, res) => {

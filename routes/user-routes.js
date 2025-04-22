@@ -1,14 +1,21 @@
 import express from "express";
 import { check } from "express-validator";
 import checkAuth from "../middleware/check-auth.js";
+import { checkAdmin, authenticateToken } from "../middleware/validate-login.js";
+import {
+  getUserByIdForAdmin,
+  updateUserByAdmin,
+  patchUserByAdmin,
+  deleteUserByAdmin,
+} from "../controllers/adminController.js";
 
 import {
   loginUser,
   newUser,
   getUserProfile,
   getAllUsers,
-  isSuperUser
 } from "../controllers/userController.js";
+import { userModel } from "../models/user.js";
 import { createUserByAdmin } from "../controllers/adminController.js";
 
 const userRoutes = express.Router();
@@ -35,39 +42,18 @@ userRoutes.post(
   newUser
 );
 
-const checkAdmin = async (req, res, next) => {
-  try {
-    const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ message: 'Email is required.' });
-    }
-
-    const superUser = await isSuperUser(email);
-
-    if (!superUser) {
-      return res.status(403).json({ message: 'Admins only.' });
-    }
-
-    next();
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
 // userRoutes.use(checkAuth);
 userRoutes.get("/me", async (req, res, next) => {
   await getUserProfile(req, res, next);
 });
 
-userRoutes.get("/profile/:id", getUserProfile);
-userRoutes.get("/users", getAllUsers);
+userRoutes.get("/profile/:id", authenticateToken, getUserProfile);
+userRoutes.get("/users", authenticateToken, getAllUsers);
 
-userRoutes.post("/action", checkAdmin, createUserByAdmin);
-// userRoutes.get("/action/:id", checkAdmin, getUserByIdForAdmin);
-// userRoutes.put("/action/:id", checkAdmin, updateUserByAdmin);
-// userRoutes.patch("/action/:id", checkAdmin, patchUserByAdmin);
-// userRoutes.delete("/action/:id", checkAdmin, deleteUserByAdmin);
+userRoutes.post("/action", authenticateToken, checkAdmin, createUserByAdmin);
+userRoutes.get("/action/:id", checkAdmin, getUserByIdForAdmin);
+userRoutes.put("/action/:id", checkAdmin, updateUserByAdmin);
+userRoutes.patch("/action/:id", checkAdmin, patchUserByAdmin);
+userRoutes.delete("/action/:id", checkAdmin, deleteUserByAdmin);
 
 export default userRoutes;

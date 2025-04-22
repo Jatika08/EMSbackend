@@ -31,16 +31,13 @@ export async function loginUser(req, res, next) {
   try {
     const { email, password } = req.body;
 
-    const user = await userModel.getUserByEmail(email);
+    const user = await userModel.getUserPasswordByEmail(email);
     if (!user) {
-      res.status(401).json({ message: "Invalid credentials" });
-      return;
+      return res.status(401).json({ message: "Invalid credentials" });
     }
-
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      res.status(401).json({ message: "Invalid credentials" });
-      return;
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     const token = jwt.sign(
@@ -49,7 +46,9 @@ export async function loginUser(req, res, next) {
       { expiresIn: "1h" }
     );
 
-    res.status(200).json({ token, userId: user.id });
+    await userModel.setToken(user.id, token);
+
+    return res.status(200).json({ token, userId: user.id, email: user.email });
   } catch (err) {
     next(err);
   }
@@ -65,7 +64,9 @@ export async function getUserProfile(req, res, next) {
       : await userModel.getUserByEmail(currentUserId);
 
     if (!targetUser) {
-      return res.status(404).json({ message: currentUserId+" user not found" });
+      return res
+        .status(404)
+        .json({ message: currentUserId + " user not found" });
     }
 
     const isSelf = String(currentUserId) === String(targetUser.id);

@@ -132,8 +132,28 @@ async function initDatabase() {
   `);
 }
 
+async function getUserPasswordByEmail(email) {
+  const res = await pool.query(
+    "SELECT password,id,email FROM users WHERE email = $1 AND isactive = TRUE",
+    [email]
+  );
+  return res.rows[0];
+}
+
 async function getUserByEmail(email) {
-  const res = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+  const res = await pool.query(
+    "SELECT email, position, name FROM users WHERE email = $1 AND isactive = TRUE",
+    [email]
+  );
+  return res.rows[0];
+}
+
+async function getUserById(id, isAdmin = false) {
+  const query = isAdmin
+    ? "SELECT * FROM users WHERE id = $1 and isactive = TRUE"
+    : "SELECT email, position, name FROM users WHERE id = $1 and isactive = TRUE";
+
+  const res = await pool.query(query, [id]);
   return res.rows[0];
 }
 
@@ -175,9 +195,10 @@ async function updateUser(id, updates) {
 }
 
 async function deleteUser(id) {
-  const res = await pool.query("DELETE FROM users WHERE id = $1 RETURNING *", [
-    id,
-  ]);
+  const res = await pool.query(
+    "UPDATE users SET isactive = FALSE WHERE id = $1 RETURNING *",
+    [id]
+  );
   return res.rows[0];
 }
 
@@ -189,7 +210,7 @@ async function applyLeave(values) {
 }
 
 async function applyHalfDay(values) {
-  return applyLeave(values); // same as applyLeave
+  return applyLeave(values);
 }
 
 async function applyWfh(values) {
@@ -211,18 +232,60 @@ async function approveLeave({ email, leaveId }) {
   return res.rows[0];
 }
 
-async function getRecentlyPostedLeaves(limit, offset) {
+async function getLeavesFiltered(filters) {
+  const {
+    email,
+    fromMonth,
+    fromYear,
+    toMonth,
+    toYear,
+    isApproved,
+    limit,
+    offset,
+  } = filters;
+
+  const values = [];
+  let whereClauses = [];
+
+  if (email) {
+    values.push(email);
+    whereClauses.push(`email = $${values.length}`);
+  }
+
+  if (typeof isApproved === "boolean") {
+    values.push(isApproved);
+    whereClauses.push(`is_approved = $${values.length}`);
+  }
+
+  if (fromMonth && fromYear) {
+    values.push(`${fromYear}-${String(fromMonth).padStart(2, "0")}-01`);
+    whereClauses.push(`start_date >= $${values.length}`);
+  }
+
+  if (toMonth && toYear) {
+    const lastDay = new Date(toYear, toMonth, 0).getDate();
+    values.push(`${toYear}-${String(toMonth).padStart(2, "0")}-${lastDay}`);
+    whereClauses.push(`end_date <= $${values.length}`);
+  }
+
+  const whereClause =
+    whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+
   const q = `
     SELECT * FROM (
       SELECT * FROM leaves
-      UNION
+      UNION ALL
       SELECT * FROM wfh
     ) AS combined
-    WHERE is_approved = false
-    ORDER BY leave_apply_date ASC
-    LIMIT $1 OFFSET $2;
+    ${whereClause}
+    ORDER BY leave_apply_date DESC
+    LIMIT $${values.length + 1} OFFSET $${values.length + 2};
   `;
-  const res = await pool.query(q, [limit, offset]);
+
+  values.push(limit);
+  values.push(offset);
+
+  const res = await pool.query(q, values);
   return res.rows;
 }
 
@@ -273,11 +336,30 @@ const isSuperUser = async (email) => {
   }
 };
 
+async function setToken(userId, token) {
+  await pool.query("DELETE FROM user_tokens WHERE user_id = $1", [userId]);
+
+  const q =
+    "INSERT INTO user_tokens (user_id, token) VALUES ($1, $2) RETURNING *";
+  const res = await pool.query(q, [userId, token]);
+  return res.rows[0];
+}
+
+async function getToken(userId, token) {
+  const q = "SELECT * FROM user_tokens WHERE user_id = $1 AND token = $2";
+  const res = await pool.query(q, [userId, token]);
+  return res.rows[0];
+}
+
 export const userModel = {
+  getUserPasswordByEmail,
+  setToken,
+  getToken,
   isSuperUser,
   createUser,
   initDatabase,
   getUserByEmail,
+  getUserById,
   getMe,
   getAllUsers,
   updateUser,
@@ -286,7 +368,7 @@ export const userModel = {
   applyHalfDay,
   applyWfh,
   approveLeave,
-  getRecentlyPostedLeaves,
+  getLeavesFiltered,
   getApprovedLeavesWfh,
   getLeavesByEmail,
 };

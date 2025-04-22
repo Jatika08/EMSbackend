@@ -56,6 +56,11 @@ export async function updateUserByAdmin(req, res) {
   res.status(200).json(updated);
 }
 
+export async function getUserByIdForAdmin(req, res) {
+  const data = await userModel.getUserById(req.params.id, true);
+  res.status(200).json(data);
+}
+
 export async function patchUserByAdmin(req, res) {
   const patched = await userModel.updateUser(req.params.id, req.body);
   res.status(200).json(patched);
