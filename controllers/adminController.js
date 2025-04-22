@@ -1,51 +1,23 @@
 import { userModel } from "../models/user.js";
-import { hashPassword } from "./hashingController.js";
+import { generateTemporaryToken } from "../utils/functions.js";
 
 export async function createUserByAdmin(req, res) {
   try {
-    const {
-      email,
-      password,
-      joiningDate,
-      position,
-      name,
-      aadhar,
-      panNo,
-      isSuperUser,
-      image,
-      address,
-      linkedInId,
-      phone,
-      githubId,
-      dateOfBirth,
-      leaveDate = [],
-    } = req.body;
+    const { email, dateOfBirth } = req.body;
 
-    if (!email || !password || !name || !position) {
+    if (!email || !dateOfBirth) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-    const hashedPassword = await hashPassword(password);
-    console.log("hashedPassword", hashedPassword);
+
+    const temporary_token = generateTemporaryToken();
 
     const user = await userModel.createUser({
       email,
-      password:hashedPassword,
-      joiningDate,
-      position,
-      name,
-      aadhar,
-      panNo,
-      isSuperUser,
-      image,
-      address,
-      linkedInId,
-      phone,
-      githubId,
       dateOfBirth,
-      leaveDate,
+      temporary_token,
     });
 
-    res.status(201).json(user);
+    res.status(201).json({ ...user, temporary_token });
   } catch (err) {
     res.status(500).json({
       message: "User creation failed",

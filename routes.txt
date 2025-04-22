@@ -1,0 +1,6 @@
+POST:http://localhost:5000/users/login login
+    {
+        "email":"test@example.com",
+        "password":"test123"
+    }
+GET:http://localhost:5000/users/users get all the details of the user

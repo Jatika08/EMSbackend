@@ -1,34 +1,8 @@
 import pool from "../database/db.js";
 
-// Type definitions
-// interface User {
-//   id?: number;
-//   email: string;
-//   password: string;
-//   joiningDate?: string;
-//   position?: string;
-//   name?: string;
-//   aadhar?: string;
-//   panNo?: string;
-//   isSuperUser?: boolean;
-//   image?: string;
-//   address?: string;
-//   linkedInId?: string;
-//   phone?: string;
-//   githubId?: string;
-//   dateOfBirth?: string;
-//   leaveDate?: string[];
-// }
-
-// interface ApprovedLeaveParams {
-//   startDate: string;
-//   endDate: string;
-// }
-
 async function createUser(user) {
   const {
     email,
-    password,
     joiningDate,
     position,
     name,
@@ -41,26 +15,27 @@ async function createUser(user) {
     phone,
     githubId,
     dateOfBirth,
+    temporary_token,
     leaveDate = [],
   } = user;
 
   const query = `
     INSERT INTO users (
-      email, password, joining_date, position, name, aadhar, pan_no,
+      email,  joining_date, password, position, name, aadhar, pan_no,
       is_super_user, image, address, linked_in_id, phone, github_id,
       date_of_birth, leave_date
     )
     VALUES ($1, $2, $3, $4, $5, $6, $7,
             $8, $9, $10, $11, $12, $13,
-            $14, $15)
+            $14)
     RETURNING *;
   `;
 
   const values = [
     email,
-    password,
     joiningDate,
     position,
+    (password = null),
     name,
     aadhar,
     panNo,
@@ -71,6 +46,7 @@ async function createUser(user) {
     phone,
     githubId,
     dateOfBirth,
+    temporary_token,
     JSON.stringify(leaveDate),
   ];
 
@@ -83,7 +59,7 @@ async function initDatabase() {
     CREATE TABLE if not exists users (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       email TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
+      password TEXT,
       joining_date DATE,
       position TEXT,
       name TEXT,
@@ -98,7 +74,8 @@ async function initDatabase() {
       date_of_birth DATE,
       isActive BOOLEAN DEFAULT TRUE,
       leave_date JSONB DEFAULT '[]'::jsonb,
-      is_approved BOOLEAN DEFAULT FALSE
+      is_approved BOOLEAN DEFAULT FALSE,
+      temporary_token TEXT
     );
   `);
 
@@ -134,7 +111,7 @@ async function initDatabase() {
 
 async function getUserPasswordByEmail(email) {
   const res = await pool.query(
-    "SELECT password,id,email FROM users WHERE email = $1 AND isactive = TRUE",
+    "SELECT password, id, email FROM users WHERE email = $1 AND isactive = TRUE",
     [email]
   );
   return res.rows[0];

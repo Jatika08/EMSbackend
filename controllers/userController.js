@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { hashPassword, verifyPassword } from "./hashingController.js";
 
+
 export async function newUser(req, res, next) {
   try {
     const { email, password, ...rest } = req.body;
@@ -52,6 +53,56 @@ export async function loginUser(req, res, next) {
   } catch (err) {
     next(err);
   }
+}
+
+export function registerUserbyUser(req, res) {
+  const { email, password, date_of_birth, ...rest } = req.body;
+
+  if (!email || !password || !date_of_birth) {
+    return res
+      .status(400)
+      .json({ message: "Email, DOB, and password are required" });
+  }
+
+  userModel
+    .getUserByEmail(email)
+    .then((existingUser) => {
+      if (!existingUser) {
+        res.status(404).json({ message: "Email not approved by admin" });
+        throw new Error("Stop chain");
+      }
+
+      const dobInDB = new Date(existingUser.date_of_birth)
+        .toISOString()
+        .split("T")[0];
+      const dobInReq = new Date(date_of_birth).toISOString().split("T")[0];
+
+      if (existingUser.password !== null || dobInDB !== dobInReq) {
+        res
+          .status(409)
+          .json({ message: "User already exists or DOB doesn't match" });
+        throw new Error("Stop chain");
+      }
+
+      return hashPassword(password);
+    })
+    .then((hashedPassword) => {
+      return userModel.createUser({
+        email,
+        password: hashedPassword,
+        ...rest,
+      });
+    })
+    .then((newUser) => {
+      res.status(201).json({ message: "User created", user: newUser });
+    })
+    .catch((err) => {
+      if (err.message === "Stop chain") return;
+      res.status(500).json({
+        message: "User creation failed",
+        error: err instanceof Error ? err.message : "Unknown error",
+      });
+    });
 }
 
 export async function getUserProfile(req, res, next) {

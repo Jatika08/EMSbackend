@@ -14,6 +14,7 @@ import {
   newUser,
   getUserProfile,
   getAllUsers,
+  registerUserbyUser,
 } from "../controllers/userController.js";
 import { userModel } from "../models/user.js";
 import { createUserByAdmin } from "../controllers/adminController.js";
@@ -28,6 +29,8 @@ userRoutes.post(
   ],
   loginUser
 );
+
+userRoutes.patch("/register", registerUserbyUser);
 
 userRoutes.post(
   "/signup",
@@ -48,12 +51,11 @@ userRoutes.get("/me", async (req, res, next) => {
 });
 
 userRoutes.get("/profile/:id", authenticateToken, getUserProfile);
-userRoutes.get("/users", authenticateToken, getAllUsers);
-
+userRoutes.get("/users", authenticateToken, getAllUsers);//this gets all the users and their departments
 userRoutes.post("/action", authenticateToken, checkAdmin, createUserByAdmin);
-userRoutes.get("/action/:id", checkAdmin, getUserByIdForAdmin);
-userRoutes.put("/action/:id", checkAdmin, updateUserByAdmin);
-userRoutes.patch("/action/:id", checkAdmin, patchUserByAdmin);
-userRoutes.delete("/action/:id", checkAdmin, deleteUserByAdmin);
+userRoutes.get("/action/:id", checkAdmin, getUserByIdForAdmin);//use this to get the user by id
+// userRoutes.put("/action/:id", checkAdmin, updateUserByAdmin);
+userRoutes.patch("/action/:id", checkAdmin, patchUserByAdmin); //use this to change the email of the user
+userRoutes.delete("/action/:id", checkAdmin, deleteUserByAdmin); //soft delete
 
 export default userRoutes;
