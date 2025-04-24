@@ -8,7 +8,7 @@ import userRoutes from "./routes/user-routes.js";
 import leaveRoutes from "./routes/leaveRoutes.js";
 import seedAdminUser from "./seeds/seedUser.js";
 
-dotenv.config(); // Make sure this is called early
+dotenv.config();
 
 const app = express();
 
@@ -21,7 +21,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-app.use("/superuser", superUserRoutes);
+app.use("/action", superUserRoutes);
 app.use("/users", userRoutes);
 app.use("/leaves", leaveRoutes);
 

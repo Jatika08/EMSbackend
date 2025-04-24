@@ -3,9 +3,10 @@ import { generateTemporaryToken } from "../utils/functions.js";
 
 export async function createUserByAdmin(req, res) {
   try {
-    const { email, dateOfBirth } = req.body;
+    const { email, date_of_birth } = req.body;
 
-    if (!email || !dateOfBirth) {
+    if (!email || !date_of_birth) {
+      console.error(email);
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -13,7 +14,7 @@ export async function createUserByAdmin(req, res) {
 
     const user = await userModel.createUser({
       email,
-      dateOfBirth,
+      date_of_birth,
       temporary_token,
     });
 

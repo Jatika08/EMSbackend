@@ -1,11 +1,6 @@
 import { userModel } from "../models/user.js";
 
 export const getLeaveData = async (req, res, next) => {
-  //GET /api/leaves?page=1&limit=10
-  //GET /api/leaves?email=test@example.com&page=1&limit=10
-  //GET /api/leaves?isApproved=false&page=1&limit=10
-  //GET /api/leaves?fromMonth=1&fromYear=2024&toMonth=4&toYear=2024&page=1&limit=10
-  //GET /api/leaves?isApproved=false&page=1&limit=20
 
   try {
     const {
@@ -41,11 +36,29 @@ export const getLeaveData = async (req, res, next) => {
 
 export const approveLeave = async (req, res, next) => {
   try {
-    const { email, leaveId } = req.body;
-    const leaveData = await userModel.approveLeave({ email, leaveId });
-    res.status(200).json(leaveData);
+    const { leaveId } = req.params;
+    const { isApproved } = req.query;
+
+    const leaveData = await userModel.approveLeave({
+      leaveId,
+      isApproved: isApproved === "true",
+    });
+
+    if (!leaveData) {
+      return res.status(404).json({ message: "Leave not found" });
+    }
+
+    res.status(200).json({
+      message: `Leave was successfully ${
+      isApproved ? "approved" : "disapproved"
+      }`,
+      leave: leaveData,
+    });
+
   } catch (err) {
-    res.status(500).json({ message: "Error approving leave", error: err });
+    res
+      .status(500)
+      .json({ message: "Error approving/disapproving leave", error: err });
   }
 };
 

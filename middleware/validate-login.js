@@ -45,7 +45,6 @@ export const checkAdmin = async (req, res, next) => {
     if (!superUser) {
       return res.status(403).json({ message: "Admins only." });
     }
-
     next();
   } catch (error) {
     console.error(error);

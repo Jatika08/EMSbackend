@@ -3,7 +3,6 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { hashPassword, verifyPassword } from "./hashingController.js";
 
-
 export async function newUser(req, res, next) {
   try {
     const { email, password, ...rest } = req.body;
@@ -44,7 +43,7 @@ export async function loginUser(req, res, next) {
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       process.env.JWT_SECRET || "hello",
-      { expiresIn: "1h" }
+      { expiresIn: "7h" }
     );
 
     await userModel.setToken(user.id, token);
@@ -55,54 +54,61 @@ export async function loginUser(req, res, next) {
   }
 }
 
-export function registerUserbyUser(req, res) {
-  const { email, password, date_of_birth, ...rest } = req.body;
+export async function registerUserbyUser(req, res) {
+  const { email, password, date_of_birth, temporary_token, ...rest } = req.body;
 
-  if (!email || !password || !date_of_birth) {
-    return res
-      .status(400)
-      .json({ message: "Email, DOB, and password are required" });
+  if (!email || !password || !date_of_birth || !temporary_token) {
+    return res.status(400).json({
+      message: "Email, DOB, password, and temporary token are required",
+    });
   }
 
-  userModel
-    .getUserByEmail(email)
-    .then((existingUser) => {
-      if (!existingUser) {
-        res.status(404).json({ message: "Email not approved by admin" });
-        throw new Error("Stop chain");
-      }
+  try {
+    const existingUser = await userModel.getUserByEmail(email);
 
-      const dobInDB = new Date(existingUser.date_of_birth)
-        .toISOString()
-        .split("T")[0];
-      const dobInReq = new Date(date_of_birth).toISOString().split("T")[0];
+    if (!existingUser) {
+      return res.status(404).json({ message: "Email not approved by admin" });
+    }
 
-      if (existingUser.password !== null || dobInDB !== dobInReq) {
-        res
-          .status(409)
-          .json({ message: "User already exists or DOB doesn't match" });
-        throw new Error("Stop chain");
-      }
+    console.log(existingUser)
 
-      return hashPassword(password);
-    })
-    .then((hashedPassword) => {
-      return userModel.createUser({
-        email,
-        password: hashedPassword,
-        ...rest,
+    const dobInDB = new Date(existingUser.date_of_birth)
+      .toISOString()
+      .split("T")[0];
+    const dobInReq = new Date(date_of_birth).toISOString().split("T")[0];
+    // console.log(
+    //   "dobInDB: " + dobInDB,
+    //   " dobInReq: " + dobInReq,
+    //   " existingUser.temporary_token: " + existingUser.temporary_token,
+    //   "sent temporary_token: " + temporary_token
+    // );
+    if (
+      // existingUser.password !== null ||
+      // dobInDB !== dobInReq ||
+      existingUser.temporary_token === null
+    ) {
+      return res.status(409).json({
+        message: "User already exists or credentials do not match",
       });
-    })
-    .then((newUser) => {
-      res.status(201).json({ message: "User created", user: newUser });
-    })
-    .catch((err) => {
-      if (err.message === "Stop chain") return;
-      res.status(500).json({
-        message: "User creation failed",
-        error: err instanceof Error ? err.message : "Unknown error",
-      });
+    }
+
+    const hashedPassword = await hashPassword(password);
+
+    const newUser = await userModel.patchUser({
+      email,
+      password: hashedPassword,
+      ...rest,
     });
+
+    res
+      .status(201)
+      .json({ message: "User registered successfully", user: newUser });
+  } catch (err) {
+    res.status(500).json({
+      message: "User registration failed",
+      error: err instanceof Error ? err.message : "Unknown error",
+    });
+  }
 }
 
 export async function getUserProfile(req, res, next) {

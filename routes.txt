@@ -4,3 +4,30 @@ POST:http://localhost:5000/users/login login
         "password":"test123"
     }
 GET:http://localhost:5000/users/users get all the details of the user
+POST:http://localhost:5000/action use this api to get admin to approve the user, it returns temporary_token which is necessary to be given whn the user is registering.
+    {
+        "email":"test2@example.com",
+        "date_of_birth":"1997-05-04T18:30:00.000Z"
+    }
+PATCH:http://localhost:5000/users/register
+  {
+        "email":"testify@example.com",
+        "date_of_birth":"1997-05-04T18:30:00.000Z",
+        "temporary_token": "YN0HR5",
+        "password":"batman">
+    }
+POST:http://localhost:5000/leaves apply for the leave
+{
+    "email": "test2@example.com",
+    "startDate": "1997-05-04T18:30:00.000Z",
+    "endDate": "1999-06-04T18:30:00.000Z"
+}
+PATCH: http://localhost:5000/leaves/approve-disapprove/bc59e3f4-d8f1-44ce-a208-bd8c8b72d541?isApproved=true
+to approve or disapprove the leaves
+GET: http://localhost:5000/leaves/
+GET /leaves?page=1&limit=10
+GET /leaves?email=test@example.com&page=1&limit=10
+GET /leaves?isApproved=false&page=1&limit=10
+GET /leaves?fromMonth=1&fromYear=2024&toMonth=4&toYear=2024&page=1&limit=10
+GET /leaves?isApproved=false&page=1&limit=20
+ to get all the leaves

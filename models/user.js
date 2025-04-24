@@ -5,6 +5,7 @@ async function createUser(user) {
     email,
     joiningDate,
     position,
+    password,
     name,
     aadhar,
     panNo,
@@ -14,7 +15,7 @@ async function createUser(user) {
     linkedInId,
     phone,
     githubId,
-    dateOfBirth,
+    date_of_birth,
     temporary_token,
     leaveDate = [],
   } = user;
@@ -23,19 +24,19 @@ async function createUser(user) {
     INSERT INTO users (
       email,  joining_date, password, position, name, aadhar, pan_no,
       is_super_user, image, address, linked_in_id, phone, github_id,
-      date_of_birth, leave_date
+      date_of_birth, temporary_token, leave_date
     )
     VALUES ($1, $2, $3, $4, $5, $6, $7,
             $8, $9, $10, $11, $12, $13,
-            $14)
+            $14, $15, $16)
     RETURNING *;
   `;
 
   const values = [
     email,
     joiningDate,
+    password,
     position,
-    (password = null),
     name,
     aadhar,
     panNo,
@@ -45,9 +46,65 @@ async function createUser(user) {
     linkedInId,
     phone,
     githubId,
-    dateOfBirth,
+    date_of_birth,
     temporary_token,
     JSON.stringify(leaveDate),
+  ];
+
+  const res = await pool.query(query, values);
+  return res.rows[0];
+}
+
+async function patchUser(email, updates={}) {
+  const {
+    joiningDate,
+    position,
+    password,
+    aadhar,
+    panNo,
+    isSuperUser,
+    image,
+    address,
+    linkedInId,
+    phone,
+    githubId,
+    leaveDate,
+  } = updates;
+
+  const query = `
+    UPDATE users
+    SET
+      joining_date = COALESCE($1, joining_date),
+      password = COALESCE($2, password),
+      position = COALESCE($3, position),
+      aadhar = COALESCE($4, aadhar),
+      pan_no = COALESCE($5, pan_no),
+      is_super_user = COALESCE($6, is_super_user),
+      image = COALESCE($7, image),
+      address = COALESCE($8, address),
+      linked_in_id = COALESCE($9, linked_in_id),
+      phone = COALESCE($10, phone),
+      github_id = COALESCE($11, github_id),
+      leave_date = COALESCE($12, leave_date),
+      temporary_token = NULL
+    WHERE email = $13
+    RETURNING *;
+  `;
+
+  const values = [
+    joiningDate ?? null,
+    password ?? null,
+    position ?? null,
+    aadhar ?? null,
+    panNo ?? null,
+    isSuperUser ?? null,
+    image ?? null,
+    address ?? null,
+    linkedInId ?? null,
+    phone ?? null,
+    githubId ?? null,
+    leaveDate ? JSON.stringify(leaveDate) : null,
+    email,
   ];
 
   const res = await pool.query(query, values);
@@ -81,6 +138,7 @@ async function initDatabase() {
 
   await pool.query(`
     CREATE TABLE if not exists leaves (
+      leave_id UUID PRIMARY KEY  DEFAULT gen_random_uuid(),
       email TEXT REFERENCES users(email),
       start_date DATE NOT NULL,
       end_date DATE NOT NULL,
@@ -119,7 +177,7 @@ async function getUserPasswordByEmail(email) {
 
 async function getUserByEmail(email) {
   const res = await pool.query(
-    "SELECT email, position, name FROM users WHERE email = $1 AND isactive = TRUE",
+    "SELECT email, position, name,temporary_token,date_of_birth FROM users WHERE email = $1 AND isactive = TRUE",
     [email]
   );
   return res.rows[0];
@@ -140,12 +198,13 @@ async function getMe(email) {
 }
 
 async function getAllUsers(departmentIds = []) {
-  let query = "SELECT * FROM users";
+  let query =
+    "SELECT id,email,joining_date,position,name,date_of_birth FROM users";
   let values = [];
 
   if (departmentIds.length > 0) {
     const placeholders = departmentIds.map((_, i) => `$${i + 1}`).join(", ");
-    query += ` WHERE departmentId IN (${placeholders})`;
+    query += ` WHERE departmentId IN (${placeholders}) and isactive = TRUE`;
     values = departmentIds;
   }
 
@@ -197,15 +256,16 @@ async function applyWfh(values) {
   return res.rows[0];
 }
 
-async function approveLeave({ email, leaveId }) {
+async function approveLeave({ leaveId, isApproved }) {
+  //todo:
+  //if the leave is disapproved then it cant be approved
   const q = `
-    UPDATE users
-    SET is_approved = true
-    WHERE email = $1
-    AND leaveId = $2
+    UPDATE leaves
+    SET is_approved = $1
+    WHERE leave_id = $2
     RETURNING *;
   `;
-  const res = await pool.query(q, [email, leaveId]);
+  const res = await pool.query(q, [isApproved, leaveId]);
   return res.rows[0];
 }
 
@@ -251,8 +311,6 @@ async function getLeavesFiltered(filters) {
   const q = `
     SELECT * FROM (
       SELECT * FROM leaves
-      UNION ALL
-      SELECT * FROM wfh
     ) AS combined
     ${whereClause}
     ORDER BY leave_apply_date DESC
@@ -270,8 +328,6 @@ async function getApprovedLeavesWfh({ startDate, endDate }) {
   const q = `
     SELECT * FROM (
       SELECT * FROM leaves
-      UNION ALL
-      SELECT * FROM wfh
     ) AS combined
     WHERE is_approved = true
     AND start_date <= $2
@@ -334,6 +390,7 @@ export const userModel = {
   getToken,
   isSuperUser,
   createUser,
+  patchUser,
   initDatabase,
   getUserByEmail,
   getUserById,
