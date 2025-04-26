@@ -48,7 +48,17 @@ export async function loginUser(req, res, next) {
 
     await userModel.setToken(user.id, token);
 
-    return res.status(200).json({ token, userId: user.id, email: user.email });
+    return res.status(200).json({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        position: user.position,
+        departmentName: user.department_name,
+        isSuperUser: user.is_super_user,
+      },
+    });
   } catch (err) {
     next(err);
   }
@@ -70,7 +80,7 @@ export async function registerUserbyUser(req, res) {
       return res.status(404).json({ message: "Email not approved by admin" });
     }
 
-    console.log(existingUser)
+    console.log(existingUser);
 
     const dobInDB = new Date(existingUser.date_of_birth)
       .toISOString()

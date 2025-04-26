@@ -55,7 +55,7 @@ async function createUser(user) {
   return res.rows[0];
 }
 
-async function patchUser(email, updates={}) {
+async function patchUser(email, updates = {}) {
   const {
     joiningDate,
     position,
@@ -169,7 +169,7 @@ async function initDatabase() {
 
 async function getUserPasswordByEmail(email) {
   const res = await pool.query(
-    "SELECT password, id, email FROM users WHERE email = $1 AND isactive = TRUE",
+    "SELECT password, id, email, position, is_super_user, name FROM users WHERE email = $1 AND isactive = TRUE",
     [email]
   );
   return res.rows[0];
