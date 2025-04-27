@@ -64,14 +64,14 @@ export const approveLeave = async (req, res, next) => {
 
 export const applyLeaves = async (req, res, next) => {
   try {
-    const { email, startDate, endDate } = req.body;
+    const { email, startDate, endDate, isCl } = req.body;
 
     if (!email || !startDate || !endDate) {
       res.status(400).json({ message: "Missing required fields" });
       return;
     }
 
-    const leave = await userModel.applyLeave([email, startDate, endDate]);
+    const leave = await userModel.applyLeave([email, startDate, endDate, isCl]);
     res.status(201).json({ message: "Leave applied", leave });
   } catch (err) {
     res.status(500).json({ message: "Error applying leave", error: err });

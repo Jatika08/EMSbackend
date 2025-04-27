@@ -20,10 +20,12 @@ POST:http://localhost:5000/leaves apply for the leave
 {
     "email": "test2@example.com",
     "startDate": "1997-05-04T18:30:00.000Z",
-    "endDate": "1999-06-04T18:30:00.000Z"
+    "endDate": "1999-06-04T18:30:00.000Z",
+    "isCl":true
 }
 PATCH: http://localhost:5000/leaves/approve-disapprove/bc59e3f4-d8f1-44ce-a208-bd8c8b72d541?isApproved=true
 to approve or disapprove the leaves
+
 GET: http://localhost:5000/leaves/
 GET /leaves?page=1&limit=10
 GET /leaves?email=test@example.com&page=1&limit=10

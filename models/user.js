@@ -142,6 +142,7 @@ async function initDatabase() {
       email TEXT REFERENCES users(email),
       start_date DATE NOT NULL,
       end_date DATE NOT NULL,
+      isCl BOOLEAN DEFAULT FALSE,
       leave_apply_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       is_approved BOOLEAN DEFAULT FALSE
     );
@@ -240,7 +241,7 @@ async function deleteUser(id) {
 
 async function applyLeave(values) {
   const q =
-    "INSERT INTO leaves (email, start_date, end_date) VALUES ($1, $2, $3) RETURNING *";
+    "INSERT INTO leaves (email, start_date, end_date, isCl) VALUES ($1, $2, $3, $4) RETURNING *";
   const res = await pool.query(q, values);
   return res.rows[0];
 }
