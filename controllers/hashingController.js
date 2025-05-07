@@ -11,12 +11,12 @@ export const hashPassword = async (plainPassword) => {
   }
 };
 
-export const verifyPassword = async (plainPassword, hashedPassword) => {
-  try {
-    const isMatch = await bcrypt.compare(plainPassword, hashedPassword);
-    return isMatch;
-  } catch (error) {
-    console.error("Error verifying password:", error);
-    return false;
-  }
-};
+// export const verifyPassword = async (plainPassword, hashedPassword) => {
+//   try {
+//     const isMatch = await bcrypt.compare(plainPassword, hashedPassword);
+//     return isMatch;
+//   } catch (error) {
+//     console.error("Error verifying password:", error);
+//     return false;
+//   }
+// };

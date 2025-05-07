@@ -1,8 +1,6 @@
 import express from "express";
 import { check } from "express-validator";
-import checkAuth from "../middleware/check-auth.js";
-import { checkAdmin, authenticateToken } from "../middleware/validate-login.js";
-
+import { authenticateToken } from "../middleware/validate-login.js";
 
 import {
   loginUser,
@@ -10,8 +8,8 @@ import {
   getUserProfile,
   getAllUsers,
   registerUserbyUser,
+  myTeamToday,
 } from "../controllers/userController.js";
-import { userModel } from "../models/user.js";
 
 const userRoutes = express.Router();
 
@@ -26,26 +24,17 @@ userRoutes.post(
 
 userRoutes.patch("/register", registerUserbyUser);
 
-userRoutes.post(
-  "/signup",
-  [
-    check("email").normalizeEmail().isEmail(),
-    check("name").notEmpty(),
-    check("password").isLength({ min: 8 }),
-    check("position").notEmpty(),
-    check("aadhar").notEmpty(),
-    check("panNo").notEmpty(),
-  ],
-  newUser
-);
-
 // userRoutes.use(checkAuth);
 userRoutes.get("/me", async (req, res, next) => {
   await getUserProfile(req, res, next);
 });
 
+userRoutes.get("/myteamtoday", async (req, res, next) => {
+  await myTeamToday(req, res, next);
+});
+
 userRoutes.get("/profile/:id", authenticateToken, getUserProfile);
-userRoutes.get("/users", authenticateToken, getAllUsers);//this gets all the users and their departments
- //soft delete
+userRoutes.get("/users", authenticateToken, getAllUsers);
+//soft delete
 
 export default userRoutes;

@@ -13,8 +13,8 @@ PATCH:http://localhost:5000/users/register
   {
         "email":"testify@example.com",
         "date_of_birth":"1997-05-04T18:30:00.000Z",
-        "temporary_token": "YN0HR5",
-        "password":"batman">
+        "temporary_token": "JRA0BS",
+        "password":"batman"
     }
 POST:http://localhost:5000/leaves apply for the leave
 {

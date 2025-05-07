@@ -121,6 +121,7 @@ async function initDatabase() {
       position TEXT,
       name TEXT,
       aadhar TEXT,
+      department TEXT,
       pan_no TEXT,
       is_super_user BOOLEAN DEFAULT FALSE,
       image TEXT,
@@ -166,6 +167,12 @@ async function initDatabase() {
       created_at TIMESTAMP DEFAULT NOW()
     );
   `);
+
+  await pool.query(`CREATE TABLE IF NOT EXISTS notices (
+  notice_id SERIAL PRIMARY KEY,
+  notice_time TIMESTAMP,
+  notice_title TEXT,
+  notice_text TEXT);`);
 }
 
 async function getUserPasswordByEmail(email) {
@@ -213,7 +220,7 @@ async function getAllUsers(departmentIds = []) {
   return res.rows;
 }
 
-async function updateUser(id, updates) {
+async function updateUser(email, updates) {
   const fields = Object.keys(updates);
   const values = Object.values(updates);
 
@@ -223,18 +230,18 @@ async function updateUser(id, updates) {
 
   const query = `
     UPDATE users SET ${setClause}
-    WHERE id = $${fields.length + 1}
+    WHERE email = $${fields.length + 1}
     RETURNING *;
   `;
 
-  const res = await pool.query(query, [...values, id]);
+  const res = await pool.query(query, [...values, email]);
   return res.rows[0];
 }
 
-async function deleteUser(id) {
+async function deleteUser(email) {
   const res = await pool.query(
-    "UPDATE users SET isactive = FALSE WHERE id = $1 RETURNING *",
-    [id]
+    "UPDATE users SET isactive = FALSE WHERE email = $1 RETURNING *",
+    [email]
   );
   return res.rows[0];
 }
@@ -385,6 +392,48 @@ async function getToken(userId, token) {
   return res.rows[0];
 }
 
+async function makeNotice(notice_title, notice_text) {
+  const q =
+    "INSERT INTO notices (notice_title,notice_text) values ($1,$2) RETURNING *";
+  const res = await pool.query(q, [notice_title, notice_text]);
+  return res.rows[0];
+}
+
+async function getAllNotices() {
+  const q = "SELECT * from notices";
+  const res = pool.query(q);
+  return res.rows;
+}
+
+async function myTeamToday(email) {
+  const q1 = "SELECT department FROM users WHERE email = $1";
+  const res1 = await pool.query(q1, [email]);
+
+  if (res1.rows.length === 0) {
+    throw new Error("User not found");
+  }
+
+  const department = res1.rows[0].department;
+
+  const q2 = `
+    SELECT u.email, u.name,
+      CASE
+        WHEN EXISTS (
+          SELECT 1 FROM leaves l
+          WHERE l.email = u.email
+          AND CURRENT_DATE BETWEEN l.start_date AND l.end_date
+        )
+        THEN FALSE
+        ELSE TRUE
+      END AS isPresent
+    FROM users u
+    WHERE u.department = $1
+  `;
+
+  const res2 = await pool.query(q2, [department]);
+  return res2.rows;
+}
+
 export const userModel = {
   getUserPasswordByEmail,
   setToken,
@@ -406,4 +455,7 @@ export const userModel = {
   getLeavesFiltered,
   getApprovedLeavesWfh,
   getLeavesByEmail,
+  makeNotice,
+  getAllNotices,
+  myTeamToday
 };

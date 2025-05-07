@@ -1,7 +1,7 @@
 import { userModel } from "../models/user.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { hashPassword, verifyPassword } from "./hashingController.js";
+import { hashPassword } from "./hashingController.js";
 
 export async function newUser(req, res, next) {
   try {
@@ -12,7 +12,6 @@ export async function newUser(req, res, next) {
       res.status(409).json({ message: "User already exists" });
       return;
     }
-
     const hashedPassword = await hashPassword(password);
 
     const newUser = await userModel.createUser({
@@ -35,6 +34,7 @@ export async function loginUser(req, res, next) {
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
+    console.log(user);
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -86,26 +86,20 @@ export async function registerUserbyUser(req, res) {
       .toISOString()
       .split("T")[0];
     const dobInReq = new Date(date_of_birth).toISOString().split("T")[0];
-    // console.log(
-    //   "dobInDB: " + dobInDB,
-    //   " dobInReq: " + dobInReq,
-    //   " existingUser.temporary_token: " + existingUser.temporary_token,
-    //   "sent temporary_token: " + temporary_token
-    // );
-    if (
-      // existingUser.password !== null ||
-      // dobInDB !== dobInReq ||
-      existingUser.temporary_token === null
-    ) {
+    if (existingUser.temporary_token === null) {
       return res.status(409).json({
         message: "User already exists or credentials do not match",
       });
     }
 
     const hashedPassword = await hashPassword(password);
-
-    const newUser = await userModel.patchUser({
+    console.log("About to patch user with:", {
       email,
+      password: hashedPassword,
+      ...rest,
+    });
+
+    const newUser = await userModel.patchUser(email, {
       password: hashedPassword,
       ...rest,
     });
@@ -123,6 +117,7 @@ export async function registerUserbyUser(req, res) {
 
 export async function getUserProfile(req, res, next) {
   try {
+    console.log(req.user?.email);
     const userIdParam = req.body.email;
     const currentUserId = req.body.email;
 
@@ -151,6 +146,16 @@ export async function getUserProfile(req, res, next) {
           linkedInId: targetUser.linked_in_id,
         };
     return res.status(200).json(userProfile);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function myTeamToday(req, res, next) {
+  try {
+    const email = req.user.email;
+    const teamData = await userModel.myTeamToday(email);
+    return res.status(200).json(teamData);
   } catch (err) {
     next(err);
   }
