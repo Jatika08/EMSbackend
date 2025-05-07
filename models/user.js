@@ -145,7 +145,9 @@ async function initDatabase() {
       end_date DATE NOT NULL,
       isCl BOOLEAN DEFAULT FALSE,
       leave_apply_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      is_approved BOOLEAN DEFAULT FALSE
+      is_approved BOOLEAN DEFAULT FALSE,
+      isSettled BOOLEAN DEFAULT FALSE,
+      reason TEXT
     );
   `);
 
@@ -248,7 +250,7 @@ async function deleteUser(email) {
 
 async function applyLeave(values) {
   const q =
-    "INSERT INTO leaves (email, start_date, end_date, isCl) VALUES ($1, $2, $3, $4) RETURNING *";
+    "INSERT INTO leaves (email, start_date, end_date, isCl, reason) VALUES ($1, $2, $3, $4, $5) RETURNING *";
   const res = await pool.query(q, values);
   return res.rows[0];
 }
@@ -265,16 +267,23 @@ async function applyWfh(values) {
 }
 
 async function approveLeave({ leaveId, isApproved }) {
-  //todo:
-  //if the leave is disapproved then it cant be approved
   const q = `
     UPDATE leaves
-    SET is_approved = $1
+    SET is_approved = $1,
+        isSettled = true
     WHERE leave_id = $2
     RETURNING *;
   `;
-  const res = await pool.query(q, [isApproved, leaveId]);
-  return res.rows[0];
+  try {
+    const res = await pool.query(q, [isApproved, leaveId]);
+    if (res.rowCount === 0) {
+      throw new Error("Leave not found");
+    }
+    return res.rows[0];
+  } catch (error) {
+    console.error("Error approving leave:", error);
+    throw error;
+  }
 }
 
 async function getLeavesFiltered(filters) {
@@ -285,6 +294,7 @@ async function getLeavesFiltered(filters) {
     toMonth,
     toYear,
     isApproved,
+    isSettled,
     limit,
     offset,
   } = filters;
@@ -300,6 +310,11 @@ async function getLeavesFiltered(filters) {
   if (typeof isApproved === "boolean") {
     values.push(isApproved);
     whereClauses.push(`is_approved = $${values.length}`);
+  }
+
+  if (typeof isSettled === "boolean") {
+    values.push(isSettled);
+    whereClauses.push(`isSettled = $${values.length}`);
   }
 
   if (fromMonth && fromYear) {
@@ -457,5 +472,5 @@ export const userModel = {
   getLeavesByEmail,
   makeNotice,
   getAllNotices,
-  myTeamToday
+  myTeamToday,
 };

@@ -1,7 +1,6 @@
 import { userModel } from "../models/user.js";
 
 export const getLeaveData = async (req, res, next) => {
-
   try {
     const {
       email,
@@ -10,6 +9,7 @@ export const getLeaveData = async (req, res, next) => {
       toMonth,
       toYear,
       isApproved,
+      isSettled,
       page = 1,
       limit = 10,
     } = req.query;
@@ -21,6 +21,7 @@ export const getLeaveData = async (req, res, next) => {
       toMonth: parseInt(toMonth),
       toYear: parseInt(toYear),
       isApproved: isApproved !== undefined ? isApproved === "true" : undefined,
+      isSettled: isSettled !== undefined ? isSettled === "true" : true, // ✅ Default to true
       offset: (parseInt(page) - 1) * parseInt(limit),
       limit: parseInt(limit),
     };
@@ -50,11 +51,10 @@ export const approveLeave = async (req, res, next) => {
 
     res.status(200).json({
       message: `Leave was successfully ${
-      isApproved ? "approved" : "disapproved"
+        isApproved ? "approved" : "disapproved"
       }`,
       leave: leaveData,
     });
-
   } catch (err) {
     res
       .status(500)
@@ -64,14 +64,14 @@ export const approveLeave = async (req, res, next) => {
 
 export const applyLeaves = async (req, res, next) => {
   try {
-    const { email, startDate, endDate, isCl } = req.body;
+    const { email, startDate, endDate, isCl, reason } = req.body;
 
     if (!email || !startDate || !endDate) {
       res.status(400).json({ message: "Missing required fields" });
       return;
     }
 
-    const leave = await userModel.applyLeave([email, startDate, endDate, isCl]);
+    const leave = await userModel.applyLeave([email, startDate, endDate, isCl, reason]);
     res.status(201).json({ message: "Leave applied", leave });
   } catch (err) {
     res.status(500).json({ message: "Error applying leave", error: err });
