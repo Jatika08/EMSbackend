@@ -215,7 +215,7 @@ async function getMe(email) {
 
 async function getAllUsers(departmentIds = []) {
   let query =
-    "SELECT id,email,joining_date,position,name,date_of_birth FROM users";
+    "SELECT id,email,joining_date,position,name,date_of_birth,department,temporary_token,is_super_user FROM users";
   let values = [];
 
   if (departmentIds.length > 0) {
