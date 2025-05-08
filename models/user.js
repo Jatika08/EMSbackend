@@ -69,6 +69,8 @@ async function patchUser(email, updates = {}) {
     phone,
     githubId,
     leaveDate,
+    name,
+    department,
   } = updates;
 
   const query = `
@@ -86,8 +88,10 @@ async function patchUser(email, updates = {}) {
       phone = COALESCE($10, phone),
       github_id = COALESCE($11, github_id),
       leave_date = COALESCE($12, leave_date),
+      name = COALESCE($13, name),
+      department = COALESCE($14, department),
       temporary_token = NULL
-    WHERE email = $13
+    WHERE email = $15
     RETURNING *;
   `;
 
@@ -104,6 +108,8 @@ async function patchUser(email, updates = {}) {
     phone ?? null,
     githubId ?? null,
     leaveDate ? JSON.stringify(leaveDate) : null,
+    name ?? null,
+    department ?? null,
     email,
   ];
 

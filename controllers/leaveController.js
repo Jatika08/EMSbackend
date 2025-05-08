@@ -14,6 +14,18 @@ export const getLeaveData = async (req, res, next) => {
       limit = 10,
     } = req.query;
 
+    console.log("Query Parameters:", {
+      email,
+      fromMonth,
+      fromYear,
+      toMonth,
+      toYear,
+      isApproved,
+      isSettled,
+      page,
+      limit,
+    });
+
     const filters = {
       email,
       fromMonth: parseInt(fromMonth),
@@ -21,7 +33,7 @@ export const getLeaveData = async (req, res, next) => {
       toMonth: parseInt(toMonth),
       toYear: parseInt(toYear),
       isApproved: isApproved !== undefined ? isApproved === "true" : undefined,
-      isSettled: isSettled !== undefined ? isSettled === "true" : true, // ✅ Default to true
+      isSettled: isSettled !== undefined ? isSettled === "true" : true,
       offset: (parseInt(page) - 1) * parseInt(limit),
       limit: parseInt(limit),
     };
@@ -71,7 +83,13 @@ export const applyLeaves = async (req, res, next) => {
       return;
     }
 
-    const leave = await userModel.applyLeave([email, startDate, endDate, isCl, reason]);
+    const leave = await userModel.applyLeave([
+      email,
+      startDate,
+      endDate,
+      isCl,
+      reason,
+    ]);
     res.status(201).json({ message: "Leave applied", leave });
   } catch (err) {
     res.status(500).json({ message: "Error applying leave", error: err });

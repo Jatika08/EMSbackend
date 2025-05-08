@@ -12,8 +12,9 @@ POST:http://localhost:5000/action use this api to get admin to approve the user,
 PATCH:http://localhost:5000/users/register
   {
         "email":"testify@example.com",
+        "name":"bruce"
         "date_of_birth":"1997-05-04T18:30:00.000Z",
-        "temporary_token": "JRA0BS",
+        "temporary_token": "RYGPJS",
         "password":"batman"
     }
 POST:http://localhost:5000/leaves apply for the leave
@@ -21,6 +22,7 @@ POST:http://localhost:5000/leaves apply for the leave
     "email": "test2@example.com",
     "startDate": "1997-05-04T18:30:00.000Z",
     "endDate": "1999-06-04T18:30:00.000Z",
+    "reason":"xoxo"
     "isCl":true
 }
 PATCH: http://localhost:5000/leaves/approve-disapprove/bc59e3f4-d8f1-44ce-a208-bd8c8b72d541?isApproved=true
