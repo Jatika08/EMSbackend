@@ -1,4 +1,5 @@
 import { userModel } from "../models/user.js";
+import { sendMail } from '../utils/mailer.js';
 
 export const getLeaveData = async (req, res, next) => {
   try {
@@ -13,18 +14,6 @@ export const getLeaveData = async (req, res, next) => {
       page = 1,
       limit = 10,
     } = req.query;
-
-    console.log("Query Parameters:", {
-      email,
-      fromMonth,
-      fromYear,
-      toMonth,
-      toYear,
-      isApproved,
-      isSettled,
-      page,
-      limit,
-    });
 
     const filters = {
       email,
@@ -41,9 +30,7 @@ export const getLeaveData = async (req, res, next) => {
     const leaveData = await userModel.getLeavesFiltered(filters);
     res.status(200).json(leaveData);
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Error fetching leave data", error: err.message });
+    res.status(500).json({ message: "Error fetching leave data", error: err.message });
   }
 };
 
@@ -51,26 +38,38 @@ export const approveLeave = async (req, res, next) => {
   try {
     const { leaveId } = req.params;
     const { isApproved } = req.query;
+    const isApprovedBool = isApproved === "true";  // Convert to boolean safely
 
     const leaveData = await userModel.approveLeave({
       leaveId,
-      isApproved: isApproved === "true",
+      isApproved: isApprovedBool,
     });
 
     if (!leaveData) {
       return res.status(404).json({ message: "Leave not found" });
     }
 
+    // Send Email Notification to Employee
+    const employeeEmail = leaveData?.email || leaveData?.user_email || '';
+    const startDate = leaveData?.start_date || 'Start Date';
+    const endDate = leaveData?.end_date || 'End Date';
+
+    if (employeeEmail) {
+      await sendMail(
+        employeeEmail,
+        `Your Leave Request has been ${isApprovedBool ? "Approved" : "Rejected"}`,
+        `Hello,\n\nYour leave from ${startDate} to ${endDate} has been ${isApprovedBool ? "approved" : "rejected"}.\n\nThank you,\nEMS System`
+      );
+    }
+
     res.status(200).json({
-      message: `Leave was successfully ${
-        isApproved ? "approved" : "disapproved"
-      }`,
+      message: `Leave was successfully ${isApprovedBool ? "approved" : "disapproved"}`,
       leave: leaveData,
     });
+
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Error approving/disapproving leave", error: err });
+    console.error('Error in approveLeave:', err);
+    res.status(500).json({ message: "Error approving/disapproving leave", error: err });
   }
 };
 
