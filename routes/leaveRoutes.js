@@ -6,7 +6,6 @@ import pool from "../database/db.js";
 
 const leaveRoutes = express.Router();
 
-// ✅ Existing routes
 leaveRoutes.get("/", authenticateToken, (req, res, next) => {
   getLeaveData(req, res, next);
 });
@@ -22,9 +21,8 @@ leaveRoutes.patch(
   approveLeave
 );
 
-// ✅ New route for My Leaves
 leaveRoutes.get("/myleaves", authenticateToken, async (req, res) => {
-  const email = req.user.email; // ✅ Extract email from token
+  const email = req.user.email;
 
   try {
     const result = await pool.query(
