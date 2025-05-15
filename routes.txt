@@ -19,11 +19,11 @@ PATCH:http://localhost:5000/users/register
     }
 POST:http://localhost:5000/leaves apply for the leave
 {
-    "email": "test2@example.com",
-    "startDate": "1997-05-04T18:30:00.000Z",
-    "endDate": "1999-06-04T18:30:00.000Z",
-    "reason":"xoxo"
-    "isCl":true
+    "email": "test@example.com",
+    "startDate": "2025-05-01T00:00:00.000Z",
+    "endDate": "2025-05-20T00:00:00.000Z",
+    "reason": "xoxo",
+    "isCl": true
 }
 PATCH: http://localhost:5000/leaves/approve-disapprove/bc59e3f4-d8f1-44ce-a208-bd8c8b72d541?isApproved=true
 to approve or disapprove the leaves
