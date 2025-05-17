@@ -7,7 +7,8 @@ import {
   patchUserByAdmin,
   deleteUserByAdmin,
   createNotice,
-  getNotices
+  getNotices,
+  resumeUserByAdmin
 } from "../controllers/adminController.js";
 
 const superUserRoutes = express.Router();
@@ -21,6 +22,7 @@ superUserRoutes.get("/notice", getNotices)
 superUserRoutes.post("/", createUserByAdmin);
 superUserRoutes.get("/:email", getUserByAdmin);
 superUserRoutes.patch("/:email", patchUserByAdmin);
-superUserRoutes.delete("/:email", deleteUserByAdmin);
+superUserRoutes.delete("/suspend-activate/:email", deleteUserByAdmin);
+superUserRoutes.patch("/suspend-activate/:email", resumeUserByAdmin);
 
 export default superUserRoutes;

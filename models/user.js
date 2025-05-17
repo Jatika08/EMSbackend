@@ -182,7 +182,7 @@ END;
 $$ LANGUAGE plpgsql;
 `);
 
-await pool.query(`DROP TRIGGER IF EXISTS check_overlapping_leaves ON leaves;
+  await pool.query(`DROP TRIGGER IF EXISTS check_overlapping_leaves ON leaves;
 CREATE TRIGGER check_overlapping_leaves
 BEFORE INSERT OR UPDATE ON leaves
 FOR EACH ROW
@@ -233,8 +233,8 @@ async function getUserByEmail(email) {
 
 async function getUserById(id, isAdmin = false) {
   const query = isAdmin
-    ? "SELECT * FROM users WHERE id = $1 and isactive = TRUE"
-    : "SELECT email, position, name FROM users WHERE id = $1 and isactive = TRUE";
+    ? "SELECT * FROM users WHERE id = $1"
+    : "SELECT email, position, name FROM users WHERE id = $1";
 
   const res = await pool.query(query, [id]);
   return res.rows[0];
@@ -281,6 +281,14 @@ async function updateUser(email, updates) {
 async function deleteUser(email) {
   const res = await pool.query(
     "UPDATE users SET isactive = FALSE WHERE email = $1 RETURNING *",
+    [email]
+  );
+  return res.rows[0];
+}
+
+async function resumeUser(email) {
+  const res = await pool.query(
+    "UPDATE users SET isactive = TRUE WHERE email = $1 RETURNING *",
     [email]
   );
   return res.rows[0];
@@ -501,6 +509,7 @@ export const userModel = {
   getAllUsers,
   updateUser,
   deleteUser,
+  resumeUser,
   applyLeave,
   applyHalfDay,
   applyWfh,

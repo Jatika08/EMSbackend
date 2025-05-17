@@ -151,6 +151,19 @@ export async function getUserProfile(req, res, next) {
   }
 }
 
+export async function getUser(req, res, next) {
+  try {
+    const id = req.params.id;
+    const user = await userModel.getUserById(id, true);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    return res.status(200).json(user);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function myTeamToday(req, res, next) {
   try {
     const email = req.user.email;

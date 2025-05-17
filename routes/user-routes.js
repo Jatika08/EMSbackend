@@ -5,6 +5,7 @@ import { authenticateToken } from "../middleware/validate-login.js";
 import {
   loginUser,
   newUser,
+  getUser,
   getUserProfile,
   getAllUsers,
   registerUserbyUser,
@@ -35,6 +36,7 @@ userRoutes.get("/myteamtoday", async (req, res, next) => {
 
 userRoutes.get("/profile/:id", authenticateToken, getUserProfile);
 userRoutes.get("/users", authenticateToken, getAllUsers);
-//soft delete
+userRoutes.get("/users/:id", authenticateToken, getUser);
+
 
 export default userRoutes;
