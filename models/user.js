@@ -182,7 +182,7 @@ END;
 $$ LANGUAGE plpgsql;
 `);
 
-  await pool.query(`DROP TRIGGER IF EXISTS check_overlapping_leaves ON leaves;
+await pool.query(`DROP TRIGGER IF EXISTS check_overlapping_leaves ON leaves;
 CREATE TRIGGER check_overlapping_leaves
 BEFORE INSERT OR UPDATE ON leaves
 FOR EACH ROW
@@ -247,12 +247,12 @@ async function getMe(email) {
 
 async function getAllUsers(departmentIds = []) {
   let query =
-    "SELECT id,email,joining_date,position,name,date_of_birth,department,temporary_token,is_super_user FROM users";
+    "SELECT id,email,joining_date,position,name,date_of_birth,department,temporary_token,is_super_user,isactive FROM users";
   let values = [];
 
   if (departmentIds.length > 0) {
     const placeholders = departmentIds.map((_, i) => `$${i + 1}`).join(", ");
-    query += ` WHERE departmentId IN (${placeholders}) and isactive = TRUE`;
+    query += ` WHERE departmentId IN (${placeholders})`;
     values = departmentIds;
   }
 
