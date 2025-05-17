@@ -43,6 +43,7 @@ export async function patchUserByAdmin(req, res) {
 }
 
 export async function deleteUserByAdmin(req, res) {
+  console.log("xdxd")
   const deleted = await userModel.deleteUser(req.params.email);
   res.status(200).json(deleted);
 }
