@@ -157,6 +157,38 @@ async function initDatabase() {
     );
   `);
 
+  await pool.query(`CREATE OR REPLACE FUNCTION prevent_overlapping_leaves()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.start_date IS NULL OR NEW.end_date IS NULL OR NEW.email IS NULL THEN
+    RAISE EXCEPTION 'Start date, end date, and email are required.';
+  END IF;
+
+  -- Overlapping check, excluding self in case of update
+  IF EXISTS (
+    SELECT 1
+    FROM leaves
+    WHERE email = NEW.email
+      AND (
+        NEW.start_date <= end_date AND NEW.end_date >= start_date
+      )
+      AND (TG_OP != 'UPDATE' OR leave_id != NEW.leave_id)  -- exclude self
+  ) THEN
+    RAISE EXCEPTION 'Overlapping leave exists for this user in the given date range.';
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+`);
+
+await pool.query(`DROP TRIGGER IF EXISTS check_overlapping_leaves ON leaves;
+CREATE TRIGGER check_overlapping_leaves
+BEFORE INSERT OR UPDATE ON leaves
+FOR EACH ROW
+EXECUTE FUNCTION prevent_overlapping_leaves();
+`);
+
   await pool.query(`
     CREATE TABLE if not exists wfh (
       email TEXT REFERENCES users(email),
@@ -215,12 +247,12 @@ async function getMe(email) {
 
 async function getAllUsers(departmentIds = []) {
   let query =
-    "SELECT id,email,joining_date,position,name,date_of_birth,department,temporary_token,is_super_user FROM users";
+    "SELECT id,email,joining_date,position,name,date_of_birth,department,temporary_token,is_super_user,isactive FROM users";
   let values = [];
 
   if (departmentIds.length > 0) {
     const placeholders = departmentIds.map((_, i) => `$${i + 1}`).join(", ");
-    query += ` WHERE departmentId IN (${placeholders}) and isactive = TRUE`;
+    query += ` WHERE departmentId IN (${placeholders})`;
     values = departmentIds;
   }
 
