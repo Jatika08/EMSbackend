@@ -48,6 +48,11 @@ export async function deleteUserByAdmin(req, res) {
   res.status(200).json(deleted);
 }
 
+export async function resumeUserByAdmin(req, res) {
+  const reactivated = await userModel.resumeUser(req.params.email);
+  res.status(200).json(reactivated);
+}
+
 export async function createNotice(req, res) {
   try {
     const { notice_title, notice_text } = req.body;
