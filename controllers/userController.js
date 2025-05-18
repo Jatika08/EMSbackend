@@ -3,15 +3,18 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { hashPassword } from "./hashingController.js";
 
+// =========================
+// New User Registration (by Admin)
+// =========================
 export async function newUser(req, res, next) {
   try {
     const { email, password, ...rest } = req.body;
 
     const existingUser = await userModel.getUserByEmail(email);
     if (existingUser) {
-      res.status(409).json({ message: "User already exists" });
-      return;
+      return res.status(409).json({ message: "User already exists" });
     }
+
     const hashedPassword = await hashPassword(password);
 
     const newUser = await userModel.createUser({
@@ -26,6 +29,9 @@ export async function newUser(req, res, next) {
   }
 }
 
+// =========================
+// User Login
+// =========================
 export async function loginUser(req, res, next) {
   try {
     const { email, password } = req.body;
@@ -34,7 +40,7 @@ export async function loginUser(req, res, next) {
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-    console.log(user);
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -64,6 +70,9 @@ export async function loginUser(req, res, next) {
   }
 }
 
+// =========================
+// User Self Registration (after admin approval)
+// =========================
 export async function registerUserbyUser(req, res) {
   const { email, password, date_of_birth, temporary_token, ...rest } = req.body;
 
@@ -80,12 +89,6 @@ export async function registerUserbyUser(req, res) {
       return res.status(404).json({ message: "Email not approved by admin" });
     }
 
-    console.log(existingUser);
-
-    const dobInDB = new Date(existingUser.date_of_birth)
-      .toISOString()
-      .split("T")[0];
-    const dobInReq = new Date(date_of_birth).toISOString().split("T")[0];
     if (existingUser.temporary_token === null) {
       return res.status(409).json({
         message: "User already exists or credentials do not match",
@@ -93,20 +96,13 @@ export async function registerUserbyUser(req, res) {
     }
 
     const hashedPassword = await hashPassword(password);
-    console.log("About to patch user with:", {
-      email,
-      password: hashedPassword,
-      ...rest,
-    });
 
     const newUser = await userModel.patchUser(email, {
       password: hashedPassword,
       ...rest,
     });
 
-    res
-      .status(201)
-      .json({ message: "User registered successfully", user: newUser });
+    res.status(201).json({ message: "User registered successfully", user: newUser });
   } catch (err) {
     res.status(500).json({
       message: "User registration failed",
@@ -115,36 +111,39 @@ export async function registerUserbyUser(req, res) {
   }
 }
 
+// =========================
+// Get Current Logged In User Profile (My Profile Page)
+// =========================
 export async function getUserProfile(req, res, next) {
   try {
-    console.log(req.user?.email);
-    const userIdParam = req.body.email;
-    const currentUserId = req.body.email;
+    const email = req.query.email;
+  
 
-    const targetUser = userIdParam
-      ? await userModel.getMe(userIdParam)
-      : await userModel.getUserByEmail(currentUserId);
-
-    if (!targetUser) {
-      return res
-        .status(404)
-        .json({ message: currentUserId + " user not found" });
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
     }
 
-    const isSelf = String(currentUserId) === String(targetUser.id);
+    const currentUser = await userModel.getUserByEmail(email);
 
-    const userProfile = isSelf
-      ? targetUser
-      : {
-          id: targetUser.id,
-          email: targetUser.email,
-          joining_date: targetUser.joining_date,
-          date_of_birth: targetUser.date_of_birth,
-          phone: targetUser.phone,
-          name: targetUser.name,
-          position: targetUser.position,
-          linkedInId: targetUser.linked_in_id,
-        };
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const userProfile = {
+      id: currentUser.id,
+      name: currentUser.name,
+      email: currentUser.email,
+      phone: currentUser.phone,
+      position: currentUser.position,
+      department: currentUser.department,
+      image: currentUser.image,
+      joiningDate: currentUser.joining_date,
+      address: currentUser.address,
+      linkedInId: currentUser.linked_in_id,
+      githubId: currentUser.github_id,
+      dateOfBirth: currentUser.date_of_birth,
+    };
+
     return res.status(200).json(userProfile);
   } catch (err) {
     next(err);
@@ -164,9 +163,31 @@ export async function getUser(req, res, next) {
   }
 }
 
+// export async function getUser(req, res, next) {
+//   try {
+//     const id = req.params.id;
+//     const user = await userModel.getUserById(id, true);
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+//     return res.status(200).json(user);
+//   } catch (err) {
+//     next(err);
+//   }
+//}
+
+
+// =========================
+// Get Team Information (Optional)
+// =========================
 export async function myTeamToday(req, res, next) {
   try {
-    const email = req.user.email;
+    const email = req.body.email; // Again frontend must send email if not using token
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
     const teamData = await userModel.myTeamToday(email);
     return res.status(200).json(teamData);
   } catch (err) {
@@ -174,6 +195,9 @@ export async function myTeamToday(req, res, next) {
   }
 }
 
+// =========================
+// Get All Users (Admin view)
+// =========================
 export async function getAllUsers(req, res, next) {
   try {
     const departmentIds = req.query.departmentIds
