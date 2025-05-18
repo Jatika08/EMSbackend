@@ -343,13 +343,31 @@ async function getLeavesFiltered(filters) {
     isSettled,
     limit,
     offset,
+    id,
   } = filters;
 
   const values = [];
   let whereClauses = [];
 
-  if (email) {
-    values.push(email);
+  // if (email) {
+  //   values.push(email);
+  //   whereClauses.push(`email = $${values.length}`);
+  // }
+
+  let effectiveEmail = email;
+
+  if (id && !email) {
+    const userRes = await pool.query("SELECT email FROM users WHERE id = $1", [
+      id,
+    ]);
+    if (userRes.rows.length === 0) {
+      throw new Error("User not found");
+    }
+    effectiveEmail = userRes.rows[0].email;
+  }
+
+  if (effectiveEmail) {
+    values.push(effectiveEmail);
     whereClauses.push(`email = $${values.length}`);
   }
 
@@ -366,7 +384,10 @@ async function getLeavesFiltered(filters) {
   if (fromMonth && fromYear && toMonth && toYear) {
     const startOfMonth = `${fromYear}-${String(fromMonth).padStart(2, "0")}-01`;
     const lastDay = new Date(toYear, toMonth, 0).getDate();
-    const endOfMonth = `${toYear}-${String(toMonth).padStart(2, "0")}-${lastDay}`;
+    const endOfMonth = `${toYear}-${String(toMonth).padStart(
+      2,
+      "0"
+    )}-${lastDay}`;
 
     values.push(startOfMonth);
     values.push(endOfMonth);
@@ -374,7 +395,9 @@ async function getLeavesFiltered(filters) {
     values.push(endOfMonth);
 
     whereClauses.push(
-      `(start_date BETWEEN $${values.length - 3} AND $${values.length - 2} OR end_date BETWEEN $${values.length - 1} AND $${values.length})`
+      `(start_date BETWEEN $${values.length - 3} AND $${
+        values.length - 2
+      } OR end_date BETWEEN $${values.length - 1} AND $${values.length})`
     );
   }
 

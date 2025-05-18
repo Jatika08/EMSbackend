@@ -27,6 +27,7 @@ export const getLeaveData = async (req, res, next) => {
       toYear,
       isApproved,
       isSettled,
+      id,
       page = 1,
       limit = 10,
     } = req.query;
@@ -37,8 +38,10 @@ export const getLeaveData = async (req, res, next) => {
       fromYear: parseInt(fromYear),
       toMonth: parseInt(toMonth),
       toYear: parseInt(toYear),
+      id: id ?? undefined,
       isApproved: isApproved !== undefined ? isApproved === "true" : undefined,
-      isSettled: isSettled === "true" ? true : isSettled === "false" ? false : undefined,
+      isSettled:
+        isSettled === "true" ? true : isSettled === "false" ? false : undefined,
       offset: (parseInt(page) - 1) * parseInt(limit),
       limit: parseInt(limit),
     };
@@ -83,7 +86,9 @@ export const approveLeave = async (req, res, next) => {
     if (employeeEmail) {
       await sendMail(
         employeeEmail,
-        `Your Leave Request has been ${isApprovedBool ? "Approved" : "Rejected"}`,
+        `Your Leave Request has been ${
+          isApprovedBool ? "Approved" : "Rejected"
+        }`,
         `Hello,\n\nYour leave from ${startDate} to ${endDate} has been ${
           isApprovedBool ? "approved" : "rejected"
         }.\n\nThank you,\nEMS System`
@@ -91,7 +96,9 @@ export const approveLeave = async (req, res, next) => {
     }
 
     res.status(200).json({
-      message: `Leave was successfully ${isApprovedBool ? "approved" : "disapproved"}`,
+      message: `Leave was successfully ${
+        isApprovedBool ? "approved" : "disapproved"
+      }`,
       leave: leaveData,
     });
   } catch (err) {
