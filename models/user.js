@@ -363,24 +363,26 @@ async function getLeavesFiltered(filters) {
     whereClauses.push(`isSettled = $${values.length}`);
   }
 
-  if (fromMonth && fromYear) {
-    values.push(`${fromYear}-${String(fromMonth).padStart(2, "0")}-01`);
-    whereClauses.push(`start_date >= $${values.length}`);
-  }
-
-  if (toMonth && toYear) {
+  if (fromMonth && fromYear && toMonth && toYear) {
+    const startOfMonth = `${fromYear}-${String(fromMonth).padStart(2, "0")}-01`;
     const lastDay = new Date(toYear, toMonth, 0).getDate();
-    values.push(`${toYear}-${String(toMonth).padStart(2, "0")}-${lastDay}`);
-    whereClauses.push(`end_date <= $${values.length}`);
+    const endOfMonth = `${toYear}-${String(toMonth).padStart(2, "0")}-${lastDay}`;
+
+    values.push(startOfMonth);
+    values.push(endOfMonth);
+    values.push(startOfMonth);
+    values.push(endOfMonth);
+
+    whereClauses.push(
+      `(start_date BETWEEN $${values.length - 3} AND $${values.length - 2} OR end_date BETWEEN $${values.length - 1} AND $${values.length})`
+    );
   }
 
   const whereClause =
     whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
 
   const q = `
-    SELECT * FROM (
-      SELECT * FROM leaves
-    ) AS combined
+    SELECT * FROM leaves
     ${whereClause}
     ORDER BY leave_apply_date DESC
     LIMIT $${values.length + 1} OFFSET $${values.length + 2};
