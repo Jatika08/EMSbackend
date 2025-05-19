@@ -478,16 +478,25 @@ async function getToken(userId, token) {
   return res.rows[0];
 }
 
-async function makeNotice(notice_title, notice_text) {
-  const q =
-    "INSERT INTO notices (notice_title,notice_text) values ($1,$2) RETURNING *";
-  const res = await pool.query(q, [notice_title, notice_text]);
+async function makeNotice(notice_title, notice_text, notice_time) {
+  const q = `
+    INSERT INTO notices (notice_title, notice_text, notice_time)
+    VALUES ($1, $2, $3) RETURNING *;
+  `;
+  const res = await pool.query(q, [notice_title, notice_text, notice_time]);
+  return res.rows[0];
+}
+async function removeNotice(notice_id) {
+  const q = "DELETE FROM notices WHERE notice_id = $1 RETURNING *";
+  const res = await pool.query(q, [notice_id]);
   return res.rows[0];
 }
 
+
+
 async function getAllNotices() {
   const q = "SELECT * from notices";
-  const res = pool.query(q);
+  const res = await pool.query(q);
   return res.rows;
 }
 
@@ -543,6 +552,7 @@ export const userModel = {
   getApprovedLeavesWfh,
   getLeavesByEmail,
   makeNotice,
+  removeNotice,
   getAllNotices,
   myTeamToday,
 };

@@ -7,6 +7,8 @@ import superUserRoutes from "./routes/super-user-routes.js";
 import userRoutes from "./routes/user-routes.js";
 import leaveRoutes from "./routes/leaveRoutes.js";
 import seedAdminUser from "./seeds/seedUser.js";
+import noticeRoutes from "./routes/noticeRoutes.js";
+
 
 dotenv.config();
 
@@ -25,6 +27,8 @@ app.use(express.json());
 app.use("/action", superUserRoutes);
 app.use("/users", userRoutes);
 app.use("/leaves", leaveRoutes);
+app.use("/notices", noticeRoutes);
+
 
 // 404 handler
 app.use((req, res) => {
